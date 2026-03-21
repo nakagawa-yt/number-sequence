@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>数列マスター</title>
+  <title>はじめての数列</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="/_sdk/element_sdk.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,7 +115,7 @@
         <div class="text-6xl mb-6 animate-floaty">🌷</div>
 
         <h1 id="main-title" class="font-display text-4xl md:text-5xl font-bold mb-4 text-pink-500">
-          数列マスター
+          はじめての数列
         </h1>
 
         <p class="text-lg text-purple-500 mb-2">〜一般項から第4項までをみつけよう〜</p>
@@ -234,18 +234,17 @@
         <h2 class="font-display text-3xl md:text-4xl font-bold mb-4 text-orange-400">
           クリア！
         </h2>
-        <p id="final-message" class="text-xl text-stone-600 mb-6">すてき！数列マスターだね！</p>
+        <p id="final-message" class="text-xl text-stone-600 mb-6">すてき！数列の扉を開いたね！</p>
 
         <div class="soft-panel rounded-[1.5rem] p-6 mb-6 text-left">
           <h3 class="font-bold text-pink-500 mb-4">📝 今日のまとめ</h3>
           <ul class="space-y-3 text-stone-600">
             <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span><span>一般項では <strong class="text-violet-500">n に自然数を代入</strong>して項を求める</span></li>
-            <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span><span>等差数列・等比数列・2次式・等差×等比型の違いを意識する</span></li>
             <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span><span>まず <strong class="text-violet-500">a₁, a₂, a₃, a₄</strong> を丁寧に求めることが大切</span></li>
           </ul>
         </div>
 
-        <p id="rank-text" class="text-lg text-rose-400 mb-6">称号：数列マスター</p>
+        <p id="rank-text" class="text-lg text-rose-400 mb-6">称号：数列のたまご</p>
 
         <button onclick="restartGame()"
           class="soft-btn px-8 py-4 bg-gradient-to-r from-pink-300 to-purple-300 text-white font-display font-bold text-xl">
@@ -257,8 +256,8 @@
 
   <script>
     const defaultConfig = {
-      game_title: '数列マスター',
-      encouragement_text: 'すてき！数列マスターだね！',
+      game_title: 'はじめての数列',
+      encouragement_text: 'すてき！数列のたまごだね！',
       font_family: 'Zen Maru Gothic',
       font_size: 16
     };
@@ -469,7 +468,7 @@
     function showResults() {
       document.getElementById('game-screen').classList.add('hidden');
       document.getElementById('result-screen').classList.remove('hidden');
-      document.getElementById('rank-text').textContent = '称号：数列マスター';
+      document.getElementById('rank-text').textContent = '称号：数列のたまご';
 
       for (let i = 0; i < 20; i++) {
         setTimeout(() => createConfetti('final-confetti'), i * 100);
