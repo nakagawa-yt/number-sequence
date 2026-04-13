@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ベクトルぱずる Ⅲ</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --bg-top: #0f172a;
+            --bg-bottom: #1e3a8a;
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --accent-blue: #3b82f6;
+            --text-color: #1e293b;
+        }
+
+        body {
+            font-family: 'Hiragino Maru Gothic ProN', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, var(--bg-top), var(--bg-bottom));
+            background-attachment: fixed;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 95%;
+            max-width: 850px;
+            padding: 30px;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .instruction-card {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            border: 2px solid #e2e8f0;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-size: 1.25rem; /* 少し大きくして読みやすく */
+            color: var(--text-color);
+            line-height: 1.8;
+            text-align: center; /* 中央揃えを復活 */
+        }
+
+        /* 数式や強調文字が勝手に改行されないように保護 */
+        .q-inline {
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        #calc-area { margin: 30px 0; }
+        .inputs-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-size: 2rem;
+            flex-wrap: wrap;
+        }
+        .input-box-wrapper { display: flex; align-items: center; gap: 5px; }
+        .answer-input {
+            width: 90px;
+            padding: 12px;
+            font-size: 1.8rem;
+            border: 3px solid var(--accent-blue);
+            border-radius: 12px;
+            text-align: center;
+            outline: none;
+        }
+        .plus-sign { font-size: 1.5rem; font-weight: bold; margin: 0 10px; color: #64748b; }
+
+        #grid-area { display: none; margin-bottom: 20px; }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+            background-color: #94a3b8;
+            border: 4px solid #475569;
+            width: fit-content;
+            margin: 0 auto;
+            padding: 8px;
+            position: relative;
+        }
+
+        .cell {
+            background: white;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .cell:hover { background: #f1f5f9; }
+        .cell.selected { background: #fef08a; border: 3px solid #eab308; box-sizing: border-box; }
+        
+        .cell.start-point {
+            border: 4px solid #3b82f6;
+            box-sizing: border-box;
+            background: #eff6ff;
+        }
+        .cell.start-point::after {
+            content: "始点";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background: #3b82f6;
+            color: white;
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .animal-icon { font-size: 32px; pointer-events: none; }
+        .animal-name { font-size: 10px; color: #64748b; margin-top: 2px; pointer-events: none; }
+
+        .answer-display {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            margin: 15px 0;
+        }
+
+        .main-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 18px 60px;
+            border-radius: 9999px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #2563eb;
+            transition: 0.1s;
+        }
+        .main-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #2563eb; }
+
+        .feedback { min-height: 45px; margin-top: 15px; font-weight: bold; font-size: 1.3rem; }
+
+        #result-view { display: none; }
+        .form-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="game-view">
+        <div style="color: #64748b; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px;">
+            VECTOR Question <span id="q-num">1</span>
+        </div>
+        
+        <div class="instruction-card" id="q-text"></div>
+
+        <div id="calc-area">
+            <div class="inputs-container" id="inputs-wrapper"></div>
+            <p style="font-size: 1rem; color: #1e3a8a; font-weight: bold; margin-top: 25px;">
+                係数を半角で入力してください。
+            </p>
+            <p style="font-size: 0.85rem; color: #94a3b8;">マイナスの場合は「-2」のように入力します。</p>
+        </div>
+
+        <div id="grid-area">
+            <div class="grid-container" id="grid"></div>
+            <div class="answer-display">選択中: <span id="selected-list">なし</span></div>
+        </div>
+
+        <div class="controls">
+            <button class="main-btn" id="action-btn" onclick="handleAction()">決定する</button>
+        </div>
+
+        <div id="feedback" class="feedback"></div>
+    </div>
+
+    <div id="result-view">
+        <div style="font-size: 5rem; margin-bottom: 20px;">🏆</div>
+        <h2 style="color: #1e293b; font-size: 2rem;">完全クリア！</h2>
+        <div class="form-container">
+            <iframe src="https://forms.gle/xRYtzkyEzvmYv6vV8" frameborder="0" width="100%" height="100%">読み込んでいます…</iframe>
+        </div>
+        <button class="main-btn" style="margin-top: 25px;" onclick="location.reload()">もう一度</button>
+    </div>
+</div>
+
+<script>
+    const animalData = [
+        { icon: "🐶", name: "イヌ" }, { icon: "🐱", name: "ネコ" }, { icon: "🐭", name: "ネズミ" }, { icon: "🐹", name: "ハムスター" }, { icon: "🐰", name: "ウサギ" }, { icon: "🦊", name: "キツネ" },
+        { icon: "🐻", name: "クマ" }, { icon: "🐼", name: "パンダ" }, { icon: "🐨", name: "コアラ" }, { icon: "🐯", name: "トラ" }, { icon: "🦁", name: "ライオン" }, { icon: "🐮", name: "ウシ" },
+        { icon: "🐷", name: "ブタ" }, { icon: "🐸", name: "カエル" }, { icon: "🐵", name: "サル" }, { icon: "🐔", name: "ニワトリ" }, { icon: "🐧", name: "ペンギン" }, { icon: "🐦", name: "トリ" },
+        { icon: "🐤", name: "ひよこ" }, { icon: "🦉", name: "フクロウ" }, { icon: "🐴", name: "ウマ" }, { icon: "🐝", name: "ハチ" }, { icon: "🐙", name: "タコ" }, { icon: "🐢", name: "カメ" },
+        { icon: "🦖", name: "ダイナソー" }, { icon: "🐋", name: "クジラ" }, { icon: "🐘", name: "ゾウ" }, { icon: "🦒", name: "キリン" }, { icon: "豹", name: "ヒョウ" }, { icon: "🦓", name: "シマウマ" }
+    ];
+
+    const animals = [];
+    const cellSize = 80;
+    const gridCols = 6;
+    const gridRows = 5;
+
+    const questions = [
+        { 
+            text: "次の式を計算して、係数を答えてね！$$5\\vec{a} + 2\\vec{a} - 4\\vec{a}$$", 
+            ans: { a: "3" }, 
+            type: "math"
+        },
+        { 
+            text: "カッコをはずして計算してね！。$$4\\vec{a} - (3\\vec{a} - 4\\vec{a})$$", 
+            ans: { a: "5" }, 
+            type: "math"
+        },
+        { 
+            text: "2つのベクトルを計算してね！$$2(2\\vec{a} + \\vec{b}) - (\\vec{a} + 5\\vec{b})$$", 
+            ans: { a: "3", b: "-3" }, 
+            type: "math"
+        },
+        { 
+            text: "分数を含む計算です。慎重に計算してね！$$\\frac{1}{2}(4\\vec{a} - 8\\vec{b}) + \\frac{1}{3}(9\\vec{a} + 3\\vec{b})$$", 
+            ans: { a: "5", b: "-3" }, 
+            type: "math"
+        },
+        { 
+            // q-inlineクラスで囲むことで、単語ごとの不自然な改行を防止
+            text: "最終問題：図の青い矢印を <span class='q-inline'>$\\vec{a}$ とします。</span> <span class='q-inline'>始点を <b style='color: blue;'>クジラ</b> としたとき、</span> <span class='q-inline'>$\\vec{a}$ と平行なベクトル</span> の終点となる動物を</span> すべて選んでください。", 
+            ans: ["ウマ", "ニワトリ", "ライオン", "キツネ"],
+            type: "grid",
+            startPoint: "クジラ",
+            vectors: [{start:"ゾウ", end:"ハチ"}] 
+        }
+    ];
+
+    let currentIdx = 0;
+    let selectedNames = [];
+    let isCorrected = false;
+
+    function initGrid() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = "";
+        const canvas = document.createElement('canvas');
+        canvas.id = 'vector-overlay';
+        canvas.width = (gridCols * (cellSize + 4));
+        canvas.height = (gridRows * (cellSize + 4));
+        canvas.style.cssText = 'position: absolute; top: 8px; left: 8px; pointer-events: none; z-index: 10;';
+        grid.appendChild(canvas);
+
+        let idx = 0;
+        for (let y = gridRows - 1; y >= 0; y--) {
+            for (let x = 0; x < gridCols; x++) {
+                const a = animalData[idx];
+                const px = (x * (cellSize + 4)) + (cellSize / 2);
+                const py = (((gridRows - 1) - y) * (cellSize + 4)) + (cellSize / 2);
+                animals.push({ ...a, x, y, px, py });
+                
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${a.name}`;
+                cell.innerHTML = `<span class="animal-icon">${a.icon}</span><span class="animal-name">${a.name}</span>`;
+                cell.onclick = () => selectAnimal(a.name);
+                grid.appendChild(cell);
+                idx++;
+            }
+        }
+    }
+
+    function selectAnimal(name) {
+        if (isCorrected || questions[currentIdx].type !== "grid") return;
+        const cell = document.getElementById(`cell-${name}`);
+        if (selectedNames.includes(name)) {
+            selectedNames = selectedNames.filter(n => n !== name);
+            cell.classList.remove('selected');
+        } else {
+            selectedNames.push(name);
+            cell.classList.add('selected');
+        }
+        document.getElementById('selected-list').innerText = selectedNames.length > 0 ? selectedNames.join(', ') : 'なし';
+    }
+
+    function loadQuestion() {
+        isCorrected = false;
+        selectedNames = [];
+        const q = questions[currentIdx];
+        
+        document.getElementById('q-num').innerText = currentIdx + 1;
+        document.getElementById('q-text').innerHTML = q.text;
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('action-btn').innerText = "決定する";
+
+        renderMathInElement(document.getElementById('game-view'), {
+            delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}]
+        });
+
+        if (q.type === "math") {
+            document.getElementById('calc-area').style.display = "block";
+            document.getElementById('grid-area').style.display = "none";
+            const wrapper = document.getElementById('inputs-wrapper');
+            wrapper.innerHTML = "";
+            
+            const keys = Object.keys(q.ans);
+            keys.forEach((key, index) => {
+                const box = document.createElement('div');
+                box.className = 'input-box-wrapper';
+                box.innerHTML = `<input type="text" id="input-${key}" class="answer-input"><span id="label-${key}"></span>`;
+                wrapper.appendChild(box);
+                katex.render("\\vec{" + key + "}", document.getElementById(`label-${key}`));
+                
+                if (index < keys.length - 1) {
+                    const plus = document.createElement('span');
+                    plus.className = 'plus-sign';
+                    plus.innerText = "+";
+                    wrapper.appendChild(plus);
+                }
+            });
+            document.querySelector('.answer-input').focus();
+        } else {
+            document.getElementById('calc-area').style.display = "none";
+            document.getElementById('grid-area').style.display = "block";
+            document.getElementById('selected-list').innerText = "なし";
+            document.querySelectorAll('.cell').forEach(c => {
+                c.classList.remove('selected');
+                c.classList.remove('start-point');
+            });
+            if(q.startPoint) {
+                document.getElementById(`cell-${q.startPoint}`).classList.add('start-point');
+            }
+            setTimeout(drawVectors, 100);
+        }
+    }
+
+    function drawVectors() {
+        const canvas = document.getElementById('vector-overlay');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const q = questions[currentIdx];
+        if (!q.vectors) return;
+
+        q.vectors.forEach(v => {
+            const s = animals.find(a => a.name === v.start);
+            const e = animals.find(a => a.name === v.end);
+            if (s && e) {
+                const len = 16;
+                const ang = Math.atan2(e.py - s.py, e.px - s.px);
+                ctx.strokeStyle = "#3b82f6"; ctx.fillStyle = "#3b82f6"; ctx.lineWidth = 5;
+                ctx.beginPath(); ctx.moveTo(s.px, s.py); ctx.lineTo(e.px, e.py); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(e.px, e.py);
+                ctx.lineTo(e.px - len * Math.cos(ang - Math.PI / 6), e.py - len * Math.sin(ang - Math.PI / 6));
+                ctx.lineTo(e.px - len * Math.cos(ang + Math.PI / 6), e.py - len * Math.sin(ang + Math.PI / 6));
+                ctx.closePath(); ctx.fill();
+            }
+        });
+    }
+
+    function handleAction() {
+        if (isCorrected) {
+            currentIdx++;
+            if (currentIdx < questions.length) loadQuestion();
+            else showResult();
+            return;
+        }
+
+        const q = questions[currentIdx];
+        const fb = document.getElementById('feedback');
+        let isCorrect = true;
+
+        if (q.type === "math") {
+            Object.keys(q.ans).forEach(key => {
+                const val = document.getElementById(`input-${key}`).value.trim();
+                if (val !== q.ans[key]) isCorrect = false;
+            });
+        } else {
+            isCorrect = q.ans.length === selectedNames.length && 
+                        q.ans.every(n => selectedNames.includes(n));
+        }
+
+        if (isCorrect) {
+            fb.innerText = "正解です！次に進もう！ ✨";
+            fb.style.color = "#10b981";
+            document.getElementById('action-btn').innerText = "次の問題へ";
+            isCorrected = true;
+        } else {
+            fb.innerText = "答えが違うようです。もう一度計算してみよう！";
+            fb.style.color = "#f59e0b";
+        }
+    }
+
+    function showResult() {
+        document.getElementById('game-view').style.display = "none";
+        document.getElementById('result-view').style.display = "block";
+    }
+
+    initGrid();
+    loadQuestion();
+</script>
+
+</body>
+</html>
